@@ -1,0 +1,98 @@
+---
+jobs:
+- name: build-scoring-shared-kernel
+  plan:
+  - aggregate:
+    - get: scoring-shared-kernel
+      trigger: true
+    - get: pipeline-tasks
+  - task: build-maven
+    file: pipeline-tasks/build-maven/task.yml
+    input_mapping: {project: scoring-shared-kernel}
+    output_mapping: {task-output: build-maven-output}
+    params:
+      MAVEN_OPTS: {{maven-opts}}
+      MAVEN_CONFIG: {{maven-config}}
+      MAVEN_PROJECTS: scoring-shared-kernel
+  - put: scoring-shared-kernel-artifact
+    params:
+      file: build-maven-output/framework-*.jar
+      pom_file: build-maven-output/framework-*.pom
+
+resources:
+- name: pipeline-tasks
+  type: git
+  source:
+    uri: {{pipeline-tasks-git-uri}}
+    branch: {{pipeline-tasks-git-branch}}
+
+- name: scoring-shared-kernel
+  type: git
+  source:
+    uri: {{project-git-uri}}
+    branch: {{project-git-branch}}
+    private_key: {{github-private-key}}
+    paths:
+    - scoring-shared-kernel
+
+# - name: customer
+#   type: git
+#   source:
+#     uri: {{project-git-uri}}
+#     branch: {{project-git-branch}}
+#     private_key: {{github-private-key}}
+#     paths:
+#     - customer
+
+# - name: scoring
+#   type: git
+#   source:
+#     uri: {{project-git-uri}}
+#     branch: {{project-git-branch}}
+#     private_key: {{github-private-key}}
+#     paths:
+#     - scoring
+
+# - name: credit-agency
+#   type: git
+#   source:
+#     uri: {{project-git-uri}}
+#     branch: {{project-git-branch}}
+#     private_key: {{github-private-key}}
+#     paths:
+#     - credit-agency
+
+# - name: customer-contact
+#   type: git
+#   source:
+#     uri: {{project-git-uri}}
+#     branch: {{project-git-branch}}
+#     private_key: {{github-private-key}}
+#     paths:
+#     - customer-contact
+
+# - name: credit-application
+#   type: git
+#   source:
+#     uri: {{project-git-uri}}
+#     branch: {{project-git-branch}}
+#     private_key: {{github-private-key}}
+#     paths:
+#     - credit-applications
+
+- name: scoring-shared-kernel-artifact
+  type: maven-resource
+  source:
+    url: {{maven-release-uri}}
+    snapshot_url: {{maven-snapshot-uri}}
+    artifact: com.innoq.mploed.ddd:scoring-shared-kernel:jar
+    username: {{maven-username}}
+    password: {{maven-password}}
+    skip_cert_check: true
+
+resource_types:
+- name: maven-resource
+  type: docker-image
+  source:
+    repository: patrickcrocker/maven-resource
+    tag: 1.3.1

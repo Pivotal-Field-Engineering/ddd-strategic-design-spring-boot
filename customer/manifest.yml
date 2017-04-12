@@ -1,7 +1,7 @@
 ---
 applications:
 - name: mploed-customer
-  memory: 1024M
+  memory: 512M
   path: target/customer-0.1.0.jar
   services:
       - mysql-customer

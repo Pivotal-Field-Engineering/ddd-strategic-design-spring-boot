@@ -11,6 +11,10 @@
 
     <artifactId>credit-application</artifactId>
 
+    <properties>
+        <customer.wsdl.endpoint>http://localhost:9091/ws/customers.wsdl</customer.wsdl.endpoint>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -39,11 +43,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.caucho</groupId>
-            <artifactId>hessian</artifactId>
-            <version>4.0.38</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.ws</groupId>
@@ -89,7 +88,7 @@
                     <generatePackage>com.innoq.mploed.ddd.application.integration.customer.wsdl</generatePackage>
                     <schemas>
                         <schema>
-                            <url>https://mploed-customer.cfapps.io/ws/customers.wsdl</url>
+                            <url>${customer.wsdl.endpoint}</url>
                         </schema>
                     </schemas>
                 </configuration>

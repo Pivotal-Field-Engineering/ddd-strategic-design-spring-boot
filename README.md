@@ -1,5 +1,5 @@
 # DDD Strategic Design with Spring Boot
-Application to demonstrate Domain Driven Design Context Mapping patterns based on variosu Spring Boot applications.
+Application to demonstrate Domain Driven Design Context Mapping patterns based on various Spring Boot applications.
 Please bear in mind that the application itself is kept simplistic, in order to isolate the focus on the Context Mapping
 Patterns. This is the reason why you will find some logic in Controllers that should be placed in other classes in a real-world
 application or the reason why I use database IDs for a general purpose.
@@ -11,24 +11,86 @@ main workflow.
 
 
 ## Prerequisites
-- You need a current version of Maven
+- You need Java 1.8 to build and run the applications
+- Maven v3.5.0 (or just use the included `mvnw` or `mvnw.cmd` Maven wrapper)
 - A basic installation of Redis must be installed and running (redis-server)
+- *Optional.* [Cloud Foundry CLI](https://github.com/cloudfoundry/cli/releases) if you want to run the applications in Cloud Foundry
 
 ## How to run and install the example
 
 There is no "one-stop" build and install script as of yet so you will have to take a few easy manual steps that you should
 *run in this specific order*:
 
-1. Start your redis-server
-2. Build the scoring-shared-kernel module
-3. Build the customer application
-4. Run the customer application
-5. Run mvn jaxb2:generate in credit-application while the customer application is running
-6. Run the scoring application
-7. Run the credit-agency application
-8. Run the customer-contact application
-9. Run the credit-application application
-10. Start entering data at http://localhost:9090
+### Create the backing services
+
+1. Create the redis-server
+
+        cf create-service p-redis shared-vm redis-pubsub
+
+2. Create the customer MySQL database
+
+        cf create-service p-mysql 512mb mysql-customer
+
+3. Create the customer-contact MySQL database
+
+        cf create-service p-mysql 512mb mysql-customer-contact
+
+4. Create the mysql-credit-application MySQL database
+
+        cf create-service p-mysql 512mb mysql-credit-application
+
+### Build and deploy the applications
+
+1. Build the scoring-shared-kernel module
+
+        ./mvnw install --projects scoring-shared-kernel
+
+2. Build the customer application
+
+        ./mvnw package --projects customer
+
+3. Run the customer application
+
+        cf push -f customer/manifest.yml
+
+4. Build the scoring application
+
+        ./mvnw package --projects scoring
+
+5. Run the scoring application
+
+        cf push -f scoring/manifest.yml --no-start
+        cf set-env mploed-scoring creditAgencyServer https://mploed-credit-agency.local.pcfdev.io/
+        cf start mploed-scoring
+
+6. Build the credit-agency application
+
+        ./mvnw package --projects credit-agency
+
+7. Build the credit-agency application
+
+        cf push -f credit-agency/manifest.yml
+
+8. Build the customer-contact application
+
+        ./mvnw package --projects customer-contact
+
+9. Run the customer-contact application
+
+        cf push -f customer-contact/manifest.yml
+
+10. Build the credit-application while the customer application is running (this executes jaxb2:generate against the customers.wsdl)
+
+        ./mvnw package --projects credit-application -Dcustomer.wsdl.endpoint=http://mploed-customer.local.pcfdev.io/ws/customers.wsdl
+
+11. Run the credit-application application
+
+        cf push -f credit-application/manifest.yml --no-start
+        cf set-env mploed-credit-application scoringServer https://mploed-scoring.local.pcfdev.io/
+        cf set-env mploed-credit-application customerServer https://mploed-customer.local.pcfdev.io/
+        cf start mploed-credit-application
+
+12. Start entering data at https://mploed-credit-application.local.pcfdev.io
 
 ## URLs and Ports
 Each of the modules is it's own Spring Boot Application which can be accessed as follows:
@@ -50,7 +112,7 @@ Each of the modules is it's own Spring Boot Application which can be accessed as
         <td>Customer</td>
         <td>WSDL Endpoint</td>
         <td>9091</td>
-        <td>http://localhost:9091/ws/ or http://localhost:9091/ws/customer.wsdl for the wsdl</td>
+        <td>http://localhost:9091/ws/ or http://localhost:9091/ws/customers.wsdl for the wsdl</td>
     </tr>
     <tr>
         <td>Credit Agency</td>
